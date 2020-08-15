@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-const baseURL = "https://api.spotify.com/v1/"
-
 var client = &http.Client{}
 
 // APIResponse represents a response from the Spotify REST API,
@@ -29,8 +27,9 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
-func getFullURL(subURL string) (string, error) {
-	parsedBaseURL, err := url.Parse(baseURL)
+func getFullAPIURL(subURL string) (string, error) {
+	const baseAPIURL = "https://api.spotify.com/v1/"
+	parsedBaseURL, err := url.Parse(baseAPIURL)
 	if err != nil {
 		return "", err
 	}
@@ -48,9 +47,9 @@ func getFullURL(subURL string) (string, error) {
 	return resolvedURL.String(), nil
 }
 
-func makeRequest(
+func makeBasicRequest(
 	httpMethod,
-	subURL string,
+	url string,
 	headers map[string]string,
 	payloadJSON string,
 ) (APIResponse, error) {
@@ -61,11 +60,6 @@ func makeRequest(
 		return APIResponse{}, errors.New("Unsupported HTTP method")
 	}
 
-	url, err := getFullURL(subURL)
-	if err != nil {
-		return APIResponse{}, err
-	}
-
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if httpMethod != http.MethodGet {
 		request, err = http.NewRequest(httpMethod, url, strings.NewReader(payloadJSON))
@@ -74,8 +68,6 @@ func makeRequest(
 		return APIResponse{}, err
 	}
 
-	request.Header.Set("Accept", "application/json")
-	request.Header.Set("Content-Type", "application/json")
 	for key, value := range headers {
 		request.Header.Set(key, value)
 	}
@@ -86,8 +78,8 @@ func makeRequest(
 	}
 	defer response.Body.Close()
 
-	// We can safely use ReadAll here because all the requests
-	// will be to/from the Spotify API, and therefore guaranteed
+	// We can safely use ReadAll here because all the responses
+	// will be from the Spotify API, and therefore guaranteed
 	// to not be too big
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
@@ -97,30 +89,52 @@ func makeRequest(
 	return APIResponse{StatusCode: response.StatusCode, JSONBody: string(body)}, nil
 }
 
-// Get performs an HTTP GET request to a given Spotify API URL
+func makeAPIRequest(
+	httpMethod,
+	subURL string,
+	headers map[string]string,
+	payloadJSON string,
+) (APIResponse, error) {
+	url, err := getFullAPIURL(subURL)
+	if err != nil {
+		return APIResponse{}, err
+	}
+
+	updatedHeaders := map[string]string{
+		"Accept":       "application/json",
+		"Content-Type": "application/json",
+	}
+	for key, value := range headers {
+		updatedHeaders[key] = value
+	}
+
+	return makeBasicRequest(httpMethod, url, updatedHeaders, payloadJSON)
+}
+
+// GetAPI performs an HTTP GET request to a given Spotify API URL
 // identified by subURL (part after .../v1/) with
 // given headers and returns an APIResponse struct
-func Get(subURL string, headers map[string]string) (APIResponse, error) {
-	return makeRequest(http.MethodGet, subURL, headers, "")
+func GetAPI(subURL string, headers map[string]string) (APIResponse, error) {
+	return makeAPIRequest(http.MethodGet, subURL, headers, "")
 }
 
-// Post performs an HTTP POST request to a given Spotify API URL
+// PostAPI performs an HTTP POST request to a given Spotify API URL
 // identified by subURL (part after .../v1/) with
 // given headers and a JSON payload and returns an APIResponse struct
-func Post(subURL string, headers map[string]string, payloadJSON string) (APIResponse, error) {
-	return makeRequest(http.MethodPost, subURL, headers, payloadJSON)
+func PostAPI(subURL string, headers map[string]string, payloadJSON string) (APIResponse, error) {
+	return makeAPIRequest(http.MethodPost, subURL, headers, payloadJSON)
 }
 
-// Put performs an HTTP PUT request to a given Spotify API URL
+// PutAPI performs an HTTP PUT request to a given Spotify API URL
 // identified by subURL (part after .../v1/) with
 // given headers and a JSON payload and returns an APIResponse struct
-func Put(subURL string, headers map[string]string, payloadJSON string) (APIResponse, error) {
-	return makeRequest(http.MethodPut, subURL, headers, payloadJSON)
+func PutAPI(subURL string, headers map[string]string, payloadJSON string) (APIResponse, error) {
+	return makeAPIRequest(http.MethodPut, subURL, headers, payloadJSON)
 }
 
-// Delete performs an HTTP DELETE request to a given Spotify API URL
+// DeleteAPI performs an HTTP DELETE request to a given Spotify API URL
 // identified by subURL (part after .../v1/) with
 // given headers and returns an APIResponse struct
-func Delete(subURL string, headers map[string]string) (APIResponse, error) {
-	return makeRequest(http.MethodDelete, subURL, headers, "")
+func DeleteAPI(subURL string, headers map[string]string) (APIResponse, error) {
+	return makeAPIRequest(http.MethodDelete, subURL, headers, "")
 }
