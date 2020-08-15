@@ -107,12 +107,9 @@ func (auth *AuthorizationCodeFlow) Refresh(
 		return response, errors.New("token_type is not Bearer")
 	}
 
-	var createdAuthorizationCodeFlow AuthorizationCodeFlow
-	createdAuthorizationCodeFlow.AccessToken = decodedResponse.AccessToken
-	createdAuthorizationCodeFlow.ExpiresIn = decodedResponse.ExpiresIn
-	createdAuthorizationCodeFlow.RefreshToken = auth.RefreshToken
-	createdAuthorizationCodeFlow.Scope = strings.Split(decodedResponse.Scope, " ")
-	auth = &createdAuthorizationCodeFlow
+	auth.AccessToken = decodedResponse.AccessToken
+	auth.ExpiresIn = decodedResponse.ExpiresIn
+	auth.Scope = strings.Split(decodedResponse.Scope, " ")
 
 	return response, nil
 }
