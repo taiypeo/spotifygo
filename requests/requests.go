@@ -167,11 +167,7 @@ func PostAuthorization(
 	}
 
 	if response.StatusCode != 200 {
-		errorString := fmt.Sprintf(
-			"Got HTTP code %d instead of 200, response body: %s",
-			response.StatusCode,
-			response.JSONBody,
-		)
+		errorString := fmt.Sprintf("Got HTTP code %d instead of 200", response.StatusCode)
 		return response, errors.New(errorString)
 	}
 

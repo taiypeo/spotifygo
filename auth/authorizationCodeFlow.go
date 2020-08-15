@@ -37,7 +37,7 @@ func NewAuthorizationCodeFlow(
 	redirectURI,
 	clientID,
 	clientSecret string,
-) (AuthorizationCodeFlow, error) {
+) (AuthorizationCodeFlow, requests.APIResponse, error) {
 	payload := fmt.Sprintf(
 		"grant_type=authorization_code&code=%s&redirect_uri=%s",
 		authCode,
@@ -52,16 +52,16 @@ func NewAuthorizationCodeFlow(
 		payload,
 	)
 	if err != nil {
-		return AuthorizationCodeFlow{}, err
+		return AuthorizationCodeFlow{}, response, err
 	}
 
 	var decodedResponse authorizationResponse
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return AuthorizationCodeFlow{}, err
+		return AuthorizationCodeFlow{}, response, err
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return AuthorizationCodeFlow{}, errors.New("token_type is not Bearer")
+		return AuthorizationCodeFlow{}, response, errors.New("token_type is not Bearer")
 	}
 
 	var createdAuthorizationCodeFlow AuthorizationCodeFlow
@@ -69,7 +69,7 @@ func NewAuthorizationCodeFlow(
 	createdAuthorizationCodeFlow.ExpiresIn = decodedResponse.ExpiresIn
 	createdAuthorizationCodeFlow.RefreshToken = decodedResponse.RefreshToken
 	createdAuthorizationCodeFlow.Scope = strings.Split(decodedResponse.Scope, " ")
-	return createdAuthorizationCodeFlow, nil
+	return createdAuthorizationCodeFlow, response, nil
 }
 
 // GetToken returns a token that is used in Spotify REST API to authorize
@@ -81,7 +81,10 @@ func (auth *AuthorizationCodeFlow) GetToken() string {
 // Refresh refreshes the access token using the refresh token
 // clientId is the Spotify application client id
 // clientSecret is the Spotify application client secret
-func (auth *AuthorizationCodeFlow) Refresh(clientID, clientSecret string) error {
+func (auth *AuthorizationCodeFlow) Refresh(
+	clientID,
+	clientSecret string,
+) (requests.APIResponse, error) {
 	payload := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s", auth.RefreshToken)
 	encodedAuthorizationHeader := "Basic " + base64.StdEncoding.EncodeToString(
 		[]byte(fmt.Sprintf("%s:%s", clientID, clientSecret)),
@@ -92,16 +95,16 @@ func (auth *AuthorizationCodeFlow) Refresh(clientID, clientSecret string) error 
 		payload,
 	)
 	if err != nil {
-		return err
+		return response, err
 	}
 
 	var decodedResponse authorizationResponse
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return err
+		return response, err
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return errors.New("token_type is not Bearer")
+		return response, errors.New("token_type is not Bearer")
 	}
 
 	var createdAuthorizationCodeFlow AuthorizationCodeFlow
@@ -111,5 +114,5 @@ func (auth *AuthorizationCodeFlow) Refresh(clientID, clientSecret string) error 
 	createdAuthorizationCodeFlow.Scope = strings.Split(decodedResponse.Scope, " ")
 	auth = &createdAuthorizationCodeFlow
 
-	return nil
+	return response, nil
 }
