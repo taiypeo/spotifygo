@@ -28,6 +28,20 @@ func stringInSlice(str string, slice []string) bool {
 	return false
 }
 
+func acceptedStatusCode(statusCode int, acceptedCodes []int) bool {
+	if len(acceptedCodes) == 0 {
+		return true
+	}
+
+	for _, code := range acceptedCodes {
+		if statusCode == code {
+			return true
+		}
+	}
+
+	return false
+}
+
 func getFullRestAPIURL(subURL string) (string, error) {
 	const baseRestAPIURL = "https://api.spotify.com/v1/"
 	parsedBaseURL, err := url.Parse(baseRestAPIURL)
@@ -53,6 +67,7 @@ func makeBasicRequest(
 	url string,
 	headers map[string]string,
 	payload string,
+	acceptedStatusCodes []int,
 ) (APIResponse, error) {
 	if !stringInSlice(
 		httpMethod,
@@ -85,10 +100,20 @@ func makeBasicRequest(
 	// to not be too big.
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return APIResponse{}, err
+		return APIResponse{StatusCode: response.StatusCode}, err
 	}
 
-	return APIResponse{StatusCode: response.StatusCode, JSONBody: string(body)}, nil
+	apiResponse := APIResponse{StatusCode: response.StatusCode, JSONBody: string(body)}
+
+	if !acceptedStatusCode(apiResponse.StatusCode, acceptedStatusCodes) {
+		errorMessage := fmt.Sprintf(
+			"Got an unsupported status code in a request: %d",
+			apiResponse.StatusCode,
+		)
+		return apiResponse, errors.New(errorMessage)
+	}
+
+	return apiResponse, nil
 }
 
 func makeRestAPIRequest(
@@ -96,6 +121,7 @@ func makeRestAPIRequest(
 	subURL string,
 	headers map[string]string,
 	payloadJSON string,
+	acceptedStatusCodes []int,
 ) (APIResponse, error) {
 	url, err := getFullRestAPIURL(subURL)
 	if err != nil {
@@ -107,13 +133,17 @@ func makeRestAPIRequest(
 		updatedHeaders[key] = value
 	}
 
-	return makeBasicRequest(httpMethod, url, updatedHeaders, payloadJSON)
+	return makeBasicRequest(httpMethod, url, updatedHeaders, payloadJSON, acceptedStatusCodes)
 }
 
 // GetRestAPI performs an HTTP GET request to a given Spotify REST API URL
 // (identified by subURL (part after .../v1/)) with the given headers.
-func GetRestAPI(subURL string, headers map[string]string) (APIResponse, error) {
-	return makeRestAPIRequest(http.MethodGet, subURL, headers, "")
+func GetRestAPI(
+	subURL string,
+	headers map[string]string,
+	acceptedStatusCodes []int,
+) (APIResponse, error) {
+	return makeRestAPIRequest(http.MethodGet, subURL, headers, "", acceptedStatusCodes)
 }
 
 // PostRestAPI performs an HTTP POST request to a given Spotify REST API URL
@@ -122,8 +152,9 @@ func PostRestAPI(
 	subURL string,
 	headers map[string]string,
 	payloadJSON string,
+	acceptedStatusCodes []int,
 ) (APIResponse, error) {
-	return makeRestAPIRequest(http.MethodPost, subURL, headers, payloadJSON)
+	return makeRestAPIRequest(http.MethodPost, subURL, headers, payloadJSON, acceptedStatusCodes)
 }
 
 // PutRestAPI performs an HTTP PUT request to a given Spotify REST API URL
@@ -132,14 +163,19 @@ func PutRestAPI(
 	subURL string,
 	headers map[string]string,
 	payloadJSON string,
+	acceptedStatusCodes []int,
 ) (APIResponse, error) {
-	return makeRestAPIRequest(http.MethodPut, subURL, headers, payloadJSON)
+	return makeRestAPIRequest(http.MethodPut, subURL, headers, payloadJSON, acceptedStatusCodes)
 }
 
 // DeleteRestAPI performs an HTTP DELETE request to a given Spotify REST API URL
 // (identified by subURL (part after .../v1/)) with the given headers.
-func DeleteRestAPI(subURL string, headers map[string]string) (APIResponse, error) {
-	return makeRestAPIRequest(http.MethodDelete, subURL, headers, "")
+func DeleteRestAPI(
+	subURL string,
+	headers map[string]string,
+	acceptedStatusCodes []int,
+) (APIResponse, error) {
+	return makeRestAPIRequest(http.MethodDelete, subURL, headers, "", acceptedStatusCodes)
 }
 
 // PostAuthorization performs an HTTP POST request to the Spotify token API URL
@@ -161,14 +197,10 @@ func PostAuthorization(
 		tokenAPIURL,
 		updatedHeaders,
 		payloadFormURLEncoded,
+		[]int{200},
 	)
 	if err != nil {
-		return APIResponse{}, err
-	}
-
-	if response.StatusCode != 200 {
-		errorString := fmt.Sprintf("Got HTTP code %d instead of 200", response.StatusCode)
-		return response, errors.New(errorString)
+		return response, err
 	}
 
 	return response, nil
