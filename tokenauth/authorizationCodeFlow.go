@@ -1,4 +1,4 @@
-package auth
+package tokenauth
 
 import (
 	"encoding/base64"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/taiypeo/spotifygo/requests"
 )
@@ -18,26 +19,17 @@ type authorizationResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-// AuthorizationCodeFlow contains all the data that describes a successful
-// authorization by this method
-type AuthorizationCodeFlow struct {
-	AccessToken  string
-	Scope        []string
-	ExpiresIn    int64
-	RefreshToken string
-}
-
-// NewAuthorizationCodeFlow creates a new AuthorizationCodeFlow.
-// authCode is the authorization code returned from the request to the /authorize endpoint
-// redirectURI is the same redirect_uri that was supplied when requesting the authorization code
-// clientId is the Spotify application client id
-// clientSecret is the Spotify application client secret
+// NewAuthorizationCodeFlow creates a new RefreshableAuthToken.
+// authCode is the authorization code returned from the request to the /authorize endpoint;
+// redirectURI is the same redirect_uri that was supplied when requesting the authorization code;
+// clientId is the Spotify application client id;
+// clientSecret is the Spotify application client secret.
 func NewAuthorizationCodeFlow(
 	authCode,
 	redirectURI,
 	clientID,
 	clientSecret string,
-) (AuthorizationCodeFlow, requests.APIResponse, error) {
+) (RefreshableAuthToken, requests.APIResponse, error) {
 	payload := fmt.Sprintf(
 		"grant_type=authorization_code&code=%s&redirect_uri=%s",
 		authCode,
@@ -52,36 +44,31 @@ func NewAuthorizationCodeFlow(
 		payload,
 	)
 	if err != nil {
-		return AuthorizationCodeFlow{}, response, err
+		return RefreshableAuthToken{}, response, err
 	}
 
 	var decodedResponse authorizationResponse
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return AuthorizationCodeFlow{}, response, err
+		return RefreshableAuthToken{}, response, err
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return AuthorizationCodeFlow{}, response, errors.New("token_type is not Bearer")
+		return RefreshableAuthToken{}, response, errors.New("token_type is not Bearer")
 	}
 
-	var createdAuthorizationCodeFlow AuthorizationCodeFlow
-	createdAuthorizationCodeFlow.AccessToken = decodedResponse.AccessToken
-	createdAuthorizationCodeFlow.ExpiresIn = decodedResponse.ExpiresIn
-	createdAuthorizationCodeFlow.RefreshToken = decodedResponse.RefreshToken
-	createdAuthorizationCodeFlow.Scope = strings.Split(decodedResponse.Scope, " ")
-	return createdAuthorizationCodeFlow, response, nil
+	var createdRefreshableAuthToken RefreshableAuthToken
+	createdRefreshableAuthToken.CreationTime = time.Now()
+	createdRefreshableAuthToken.AccessToken = decodedResponse.AccessToken
+	createdRefreshableAuthToken.ExpiresIn = decodedResponse.ExpiresIn
+	createdRefreshableAuthToken.RefreshToken = decodedResponse.RefreshToken
+	createdRefreshableAuthToken.Scope = strings.Split(decodedResponse.Scope, " ")
+	return createdRefreshableAuthToken, response, nil
 }
 
-// GetToken returns a token that is used in Spotify REST API to authorize
-// user actions
-func (auth *AuthorizationCodeFlow) GetToken() string {
-	return "Bearer " + auth.AccessToken
-}
-
-// Refresh refreshes the access token using the refresh token
-// clientId is the Spotify application client id
-// clientSecret is the Spotify application client secret
-func (auth *AuthorizationCodeFlow) Refresh(
+// Refresh refreshes the access token using the refresh token.
+// clientId is the Spotify application client id;
+// clientSecret is the Spotify application client secret.
+func (auth *RefreshableAuthToken) Refresh(
 	clientID,
 	clientSecret string,
 ) (requests.APIResponse, error) {
@@ -107,6 +94,7 @@ func (auth *AuthorizationCodeFlow) Refresh(
 		return response, errors.New("token_type is not Bearer")
 	}
 
+	auth.CreationTime = time.Now()
 	auth.AccessToken = decodedResponse.AccessToken
 	auth.ExpiresIn = decodedResponse.ExpiresIn
 	auth.Scope = strings.Split(decodedResponse.Scope, " ")

@@ -12,7 +12,7 @@ import (
 var client = &http.Client{}
 
 // APIResponse represents a response from the Spotify REST API,
-// where JSONBody is the returned JSON
+// where JSONBody is the returned JSON.
 type APIResponse struct {
 	StatusCode int
 	JSONBody   string
@@ -82,7 +82,7 @@ func makeBasicRequest(
 
 	// We can safely use ReadAll here because all the responses
 	// will be from the Spotify API, and are therefore guaranteed
-	// to not be too big
+	// to not be too big.
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return APIResponse{}, err
@@ -111,13 +111,13 @@ func makeRestAPIRequest(
 }
 
 // GetRestAPI performs an HTTP GET request to a given Spotify REST API URL
-// (identified by subURL (part after .../v1/)) with the given headers
+// (identified by subURL (part after .../v1/)) with the given headers.
 func GetRestAPI(subURL string, headers map[string]string) (APIResponse, error) {
 	return makeRestAPIRequest(http.MethodGet, subURL, headers, "")
 }
 
 // PostRestAPI performs an HTTP POST request to a given Spotify REST API URL
-// (identified by subURL (part after .../v1/)) with the given headers and JSON payload
+// (identified by subURL (part after .../v1/)) with the given headers and JSON payload.
 func PostRestAPI(
 	subURL string,
 	headers map[string]string,
@@ -127,7 +127,7 @@ func PostRestAPI(
 }
 
 // PutRestAPI performs an HTTP PUT request to a given Spotify REST API URL
-// (identified by subURL (part after .../v1/)) with the given headers and JSON payload
+// (identified by subURL (part after .../v1/)) with the given headers and JSON payload.
 func PutRestAPI(
 	subURL string,
 	headers map[string]string,
@@ -137,14 +137,14 @@ func PutRestAPI(
 }
 
 // DeleteRestAPI performs an HTTP DELETE request to a given Spotify REST API URL
-// (identified by subURL (part after .../v1/)) with the given headers
+// (identified by subURL (part after .../v1/)) with the given headers.
 func DeleteRestAPI(subURL string, headers map[string]string) (APIResponse, error) {
 	return makeRestAPIRequest(http.MethodDelete, subURL, headers, "")
 }
 
 // PostAuthorization performs an HTTP POST request to the Spotify token API URL
 // to retrieve an authorization token. The used authorization flow is specified
-// by the headers and the x-www-form-urlencoded payload
+// by the headers and the x-www-form-urlencoded payload.
 func PostAuthorization(
 	headers map[string]string,
 	payloadFormURLEncoded string,
