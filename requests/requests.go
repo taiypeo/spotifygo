@@ -1,7 +1,8 @@
-package spotifygo
+package requests
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -155,5 +156,24 @@ func PostAuthorization(
 		updatedHeaders[key] = value
 	}
 
-	return makeBasicRequest(http.MethodPost, tokenAPIURL, updatedHeaders, payloadFormURLEncoded)
+	response, err := makeBasicRequest(
+		http.MethodPost,
+		tokenAPIURL,
+		updatedHeaders,
+		payloadFormURLEncoded,
+	)
+	if err != nil {
+		return APIResponse{}, err
+	}
+
+	if response.StatusCode != 200 {
+		errorString := fmt.Sprintf(
+			"Got HTTP code %d instead of 200, response body: %s",
+			response.StatusCode,
+			response.JSONBody,
+		)
+		return response, errors.New(errorString)
+	}
+
+	return response, nil
 }
