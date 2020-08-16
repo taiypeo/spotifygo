@@ -3,7 +3,6 @@ package profile
 import (
 	"encoding/json"
 
-	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/apiobjects"
 	"github.com/taiypeo/spotifygo/requests"
@@ -15,24 +14,24 @@ import (
 func GetUserProfile(
 	token tokenauth.Token,
 	userID string,
-) (apiobjects.PublicUser, spotifygo.APIResponse, apierrors.TypedError) {
+) (apiobjects.PublicUser, apierrors.TypedError) {
 	response, err := requests.GetRestAPI(
 		"users/"+userID,
 		map[string]string{"Authorization": token.GetToken()},
 		[]int{200},
 	)
 	if err != nil {
-		return apiobjects.PublicUser{}, response, err
+		return apiobjects.PublicUser{}, err
 	}
 
 	var user apiobjects.PublicUser
 	if err := json.Unmarshal([]byte(response.JSONBody), &user); err != nil {
-		return apiobjects.PublicUser{}, response, apierrors.NewBasicErrorFromError(err)
+		return apiobjects.PublicUser{}, apierrors.NewBasicErrorFromError(err)
 	}
 
 	if err := user.Validate(); err != nil {
-		return user, response, err
+		return user, err
 	}
 
-	return user, response, nil
+	return user, nil
 }
