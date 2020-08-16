@@ -34,6 +34,6 @@ func (authError *AuthenticationError) Error() string {
 }
 
 // GetType returns the type of AuthenticationError, so AuthenticationError implements TypedError.
-func (authError *AuthenticationError) GetType() string {
-	return "AuthenticationError"
+func (authError *AuthenticationError) GetType() ErrorType {
+	return AuthenticationErrorType
 }

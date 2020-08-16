@@ -34,6 +34,6 @@ func (restAPIError *RestAPIError) Error() string {
 }
 
 // GetType returns the type of RestAPIError, so RestAPIError implements TypedError.
-func (restAPIError *RestAPIError) GetType() string {
-	return "RestAPIError"
+func (restAPIError *RestAPIError) GetType() ErrorType {
+	return RestAPIErrorType
 }

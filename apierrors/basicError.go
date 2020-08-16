@@ -22,6 +22,6 @@ func NewBasicErrorFromError(err error) TypedError {
 }
 
 // GetType returns the type of BasicError, so BasicError implements TypedError.
-func (err *BasicError) GetType() string {
-	return "Basic"
+func (err *BasicError) GetType() ErrorType {
+	return BasicErrorType
 }
