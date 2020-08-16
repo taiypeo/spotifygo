@@ -26,15 +26,15 @@ type PKCERefreshableAuthToken struct {
 // redirectURI is the same redirect_uri that was supplied when requesting the authorization code;
 // codeVerifier is the same code verifier that you generate in the beginning of this method
 func NewPKCERefreshableAuthToken(
-	clientID,
-	code,
+	authCode,
 	redirectURI,
+	clientID,
 	codeVerifier string,
 ) (PKCERefreshableAuthToken, requests.APIResponse, error) {
 	payload := fmt.Sprintf(
 		"client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s",
 		clientID,
-		code,
+		authCode,
 		redirectURI,
 		codeVerifier,
 	)
