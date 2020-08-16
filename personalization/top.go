@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/apiobjects"
 	"github.com/taiypeo/spotifygo/requests"
@@ -22,24 +23,22 @@ const (
 	LongTerm
 )
 
-// GetUserTopArtists performs a GET request to /me/{type} to receive
-// the current user's top artists.
-// The default value for limit is 0, this will set limit to 20, with accordance to the docs.
-func GetUserTopArtists(
+func sendRequest(
 	token tokenauth.Token,
 	limit int64,
 	offset int64,
 	timeRange TimeRange,
-) (apiobjects.FullArtistPaging, apierrors.TypedError) {
+	personalizationType string,
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	if limit == 0 {
 		limit = 20 // default limit value, according to the docs
 	} else if limit < 1 || limit > 50 {
-		return apiobjects.FullArtistPaging{},
+		return spotifygo.APIResponse{},
 			apierrors.NewBasicErrorFromString("Limit has to be between 1 and 50")
 	}
 
 	if offset < 0 {
-		return apiobjects.FullArtistPaging{},
+		return spotifygo.APIResponse{},
 			apierrors.NewBasicErrorFromString("Offset cannot be negative")
 	}
 
@@ -49,12 +48,12 @@ func GetUserTopArtists(
 		LongTerm:   "long_term",
 	}[timeRange]
 	if !ok {
-		return apiobjects.FullArtistPaging{},
-			apierrors.NewBasicErrorFromString("Unknown time range")
+		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromString("Unknown time range")
 	}
 
 	url := fmt.Sprintf(
-		"me/top/artists?limit=%d&offset=%d&time_range=%s",
+		"me/top/%s?limit=%d&offset=%d&time_range=%s",
+		personalizationType,
 		limit,
 		offset,
 		timeRangeString,
@@ -64,6 +63,23 @@ func GetUserTopArtists(
 		map[string]string{"Authorization": token.GetToken()},
 		[]int{200},
 	)
+	if err != nil {
+		return spotifygo.APIResponse{}, err
+	}
+
+	return response, nil
+}
+
+// GetUserTopArtists performs a GET request to /me/{type} to receive
+// the current user's top artists.
+// The default value for limit is 0, this will set limit to 20, with accordance to the docs.
+func GetUserTopArtists(
+	token tokenauth.Token,
+	limit int64,
+	offset int64,
+	timeRange TimeRange,
+) (apiobjects.FullArtistPaging, apierrors.TypedError) {
+	response, err := sendRequest(token, limit, offset, timeRange, "artists")
 	if err != nil {
 		return apiobjects.FullArtistPaging{}, err
 	}
@@ -89,39 +105,7 @@ func GetUserTopTracks(
 	offset int64,
 	timeRange TimeRange,
 ) (apiobjects.FullTrackPaging, apierrors.TypedError) {
-	if limit == 0 {
-		limit = 20 // default limit value, according to the docs
-	} else if limit < 1 || limit > 50 {
-		return apiobjects.FullTrackPaging{},
-			apierrors.NewBasicErrorFromString("Limit has to be between 1 and 50")
-	}
-
-	if offset < 0 {
-		return apiobjects.FullTrackPaging{},
-			apierrors.NewBasicErrorFromString("Offset cannot be negative")
-	}
-
-	timeRangeString, ok := map[TimeRange]string{
-		ShortTerm:  "short_term",
-		MediumTerm: "medium_term",
-		LongTerm:   "long_term",
-	}[timeRange]
-	if !ok {
-		return apiobjects.FullTrackPaging{},
-			apierrors.NewBasicErrorFromString("Unknown time range")
-	}
-
-	url := fmt.Sprintf(
-		"me/top/tracks?limit=%d&offset=%d&time_range=%s",
-		limit,
-		offset,
-		timeRangeString,
-	)
-	response, err := requests.GetRestAPI(
-		url,
-		map[string]string{"Authorization": token.GetToken()},
-		[]int{200},
-	)
+	response, err := sendRequest(token, limit, offset, timeRange, "tracks")
 	if err != nil {
 		return apiobjects.FullTrackPaging{}, err
 	}
