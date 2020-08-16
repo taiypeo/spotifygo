@@ -34,7 +34,7 @@ func (paging FullArtistPaging) Validate() apierrors.TypedError {
 		}
 	}
 
-	return nil
+	return paging.BasicPaging.Validate()
 }
 
 // FullTrackPaging represents a full track paging object
@@ -52,5 +52,5 @@ func (paging FullTrackPaging) Validate() apierrors.TypedError {
 		}
 	}
 
-	return nil
+	return paging.BasicPaging.Validate()
 }
