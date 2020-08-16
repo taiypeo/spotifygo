@@ -1,4 +1,4 @@
-package profileapi
+package profile
 
 import (
 	"encoding/json"
@@ -8,23 +8,24 @@ import (
 	"github.com/taiypeo/spotifygo/tokenauth"
 )
 
-// GetCurrentUserProfile performs a GET request to /me to receive
-// the current user's private user profile.
-func GetCurrentUserProfile(
+// GetUserProfile performs a GET request to /users/{user_id} to receive
+// a public user profile.
+func GetUserProfile(
 	token tokenauth.Token,
-) (apiobjects.PrivateUser, requests.APIResponse, error) {
+	userID string,
+) (apiobjects.PublicUser, requests.APIResponse, error) {
 	response, err := requests.GetRestAPI(
-		"me/",
+		"users/"+userID,
 		map[string]string{"Authorization": token.GetToken()},
 		[]int{200},
 	)
 	if err != nil {
-		return apiobjects.PrivateUser{}, response, err
+		return apiobjects.PublicUser{}, response, err
 	}
 
-	var user apiobjects.PrivateUser
+	var user apiobjects.PublicUser
 	if err := json.Unmarshal([]byte(response.JSONBody), &user); err != nil {
-		return apiobjects.PrivateUser{}, response, err
+		return apiobjects.PublicUser{}, response, err
 	}
 
 	if err := user.Validate(); err != nil {
