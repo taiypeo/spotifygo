@@ -9,8 +9,8 @@ type Followers struct {
 	Total int64  `json:"total"`
 }
 
-// Valid returns an error if an Followers struct is incorrect.
-func (followers Followers) Valid() error {
+// Validate returns an error if an Followers struct is incorrect.
+func (followers Followers) Validate() error {
 	if followers.Href != "" {
 		return errors.New("Href is not empty in Followers")
 	}

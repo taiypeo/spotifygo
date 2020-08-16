@@ -6,7 +6,7 @@ package apiobjects
 // as a map[string]string in spotifygo.
 type ExternalURL map[string]string
 
-// Valid returns an error if an ExternalURL struct is incorrect.
-func (url ExternalURL) Valid() error {
+// Validate returns an error if an ExternalURL struct is incorrect.
+func (url ExternalURL) Validate() error {
 	return nil
 }

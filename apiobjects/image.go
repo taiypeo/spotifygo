@@ -10,8 +10,8 @@ type Image struct {
 	Width  int64  `json:"width"`
 }
 
-// Valid returns an error if an Image struct is incorrect.
-func (image Image) Valid() error {
+// Validate returns an error if an Image struct is incorrect.
+func (image Image) Validate() error {
 	if image.Height < 0 {
 		return errors.New("Height is less than 0 in Image")
 	}

@@ -6,7 +6,7 @@ import "errors"
 // in the Spotify API Object model.
 type PublicUser struct {
 	DisplayName  string      `json:"display_name"`
-	ExternalURLs ExternalURL `json:"external_url"`
+	ExternalURLs ExternalURL `json:"external_urls"`
 	Followers    Followers   `json:"followers"`
 	Href         string      `json:"href"`
 	ID           string      `json:"id"`
@@ -15,16 +15,16 @@ type PublicUser struct {
 	URI          string      `json:"uri"`
 }
 
-// Valid returns an error if a PublicUser struct is incorrect.
-func (user PublicUser) Valid() error {
-	if err := user.ExternalURLs.Valid(); err != nil {
+// Validate returns an error if a PublicUser struct is incorrect.
+func (user PublicUser) Validate() error {
+	if err := user.ExternalURLs.Validate(); err != nil {
 		return err
 	}
-	if err := user.Followers.Valid(); err != nil {
+	if err := user.Followers.Validate(); err != nil {
 		return err
 	}
 	for _, image := range user.Images {
-		if err := image.Valid(); err != nil {
+		if err := image.Validate(); err != nil {
 			return err
 		}
 	}

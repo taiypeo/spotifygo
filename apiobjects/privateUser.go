@@ -9,7 +9,7 @@ type PrivateUser struct {
 	PublicUser
 }
 
-// Valid returns an error if a PrivateUser struct is incorrect.
-func (user PrivateUser) Valid() error {
-	return user.PublicUser.Valid()
+// Validate returns an error if a PrivateUser struct is incorrect.
+func (user PrivateUser) Validate() error {
+	return user.PublicUser.Validate()
 }
