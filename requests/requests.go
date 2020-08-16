@@ -127,10 +127,8 @@ func makeRestAPIRequest(
 ) (spotifygo.APIResponse, apierrors.TypedError) {
 	url, err := getFullRestAPIURL(subURL)
 	if err != nil {
-		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromError(err)
+		return spotifygo.APIResponse{}, err
 	}
-
-	fmt.Println(url)
 
 	updatedHeaders := map[string]string{"Content-Type": "application/json"}
 	for key, value := range headers {
@@ -212,7 +210,7 @@ func PostAuthorization(
 		apierrors.NewAuthenticationError,
 	)
 	if err != nil {
-		return response, apierrors.NewBasicErrorFromError(err)
+		return response, err
 	}
 
 	return response, nil

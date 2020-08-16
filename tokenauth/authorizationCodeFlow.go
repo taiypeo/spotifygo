@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/requests"
 )
@@ -76,10 +75,7 @@ func NewRefreshableAuthToken(
 // Refresh refreshes the access token using the refresh token.
 // clientId is the Spotify application client id;
 // clientSecret is the Spotify application client secret.
-func (auth *RefreshableAuthToken) Refresh(
-	clientID,
-	clientSecret string,
-) (spotifygo.APIResponse, apierrors.TypedError) {
+func (auth *RefreshableAuthToken) Refresh(clientID, clientSecret string) apierrors.TypedError {
 	payload := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s", auth.RefreshToken)
 	encodedAuthorizationHeader := "Basic " + base64.StdEncoding.EncodeToString(
 		[]byte(fmt.Sprintf("%s:%s", clientID, clientSecret)),
@@ -90,7 +86,7 @@ func (auth *RefreshableAuthToken) Refresh(
 		payload,
 	)
 	if err != nil {
-		return response, err
+		return err
 	}
 
 	var decodedResponse struct {
@@ -100,11 +96,11 @@ func (auth *RefreshableAuthToken) Refresh(
 		ExpiresIn   int64  `json:"expires_in"`
 	}
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return response, apierrors.NewBasicErrorFromError(err)
+		return apierrors.NewBasicErrorFromError(err)
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return response, apierrors.NewBasicErrorFromString("token_type is not Bearer")
+		return apierrors.NewBasicErrorFromString("token_type is not Bearer")
 	}
 
 	auth.CreationTime = time.Now()
@@ -112,5 +108,5 @@ func (auth *RefreshableAuthToken) Refresh(
 	auth.ExpiresIn = decodedResponse.ExpiresIn
 	auth.Scope = strings.Split(decodedResponse.Scope, " ")
 
-	return response, nil
+	return nil
 }
