@@ -23,6 +23,19 @@ const (
 	LongTerm
 )
 
+func (timeRange TimeRange) String() (string, apierrors.TypedError) {
+	timeRangeString, ok := map[TimeRange]string{
+		ShortTerm:  "short_term",
+		MediumTerm: "medium_term",
+		LongTerm:   "long_term",
+	}[timeRange]
+	if !ok {
+		return "", apierrors.NewBasicErrorFromString("Unknown time range")
+	}
+
+	return timeRangeString, nil
+}
+
 func sendRequest(
 	token tokenauth.Token,
 	limit int64,
@@ -42,13 +55,9 @@ func sendRequest(
 			apierrors.NewBasicErrorFromString("Offset cannot be negative")
 	}
 
-	timeRangeString, ok := map[TimeRange]string{
-		ShortTerm:  "short_term",
-		MediumTerm: "medium_term",
-		LongTerm:   "long_term",
-	}[timeRange]
-	if !ok {
-		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromString("Unknown time range")
+	timeRangeString, err := timeRange.String()
+	if err != nil {
+		return spotifygo.APIResponse{}, err
 	}
 
 	url := fmt.Sprintf(
