@@ -3,10 +3,10 @@ package tokenauth
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/requests"
 )
 
@@ -27,7 +27,10 @@ func (auth *AuthToken) GetToken() string {
 // NewAuthToken creates a new AuthToken.
 // clientId is the Spotify application client id;
 // clientSecret is the Spotify application client secret.
-func NewAuthToken(clientID, clientSecret string) (AuthToken, requests.APIResponse, error) {
+func NewAuthToken(
+	clientID,
+	clientSecret string,
+) (AuthToken, apierrors.TypedError) {
 	encodedAuthorizationHeader := "Basic " + base64.StdEncoding.EncodeToString(
 		[]byte(fmt.Sprintf("%s:%s", clientID, clientSecret)),
 	)
@@ -37,7 +40,7 @@ func NewAuthToken(clientID, clientSecret string) (AuthToken, requests.APIRespons
 		"grant_type=client_credentials",
 	)
 	if err != nil {
-		return AuthToken{}, response, err
+		return AuthToken{}, err
 	}
 
 	var decodedResponse struct {
@@ -46,16 +49,16 @@ func NewAuthToken(clientID, clientSecret string) (AuthToken, requests.APIRespons
 		ExpiresIn   int64  `json:"expires_in"`
 	}
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return AuthToken{}, response, err
+		return AuthToken{}, apierrors.NewBasicErrorFromError(err)
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return AuthToken{}, response, errors.New("token_type is not Bearer")
+		return AuthToken{}, apierrors.NewBasicErrorFromString("token_type is not Bearer")
 	}
 
 	var createdAuthToken AuthToken
 	createdAuthToken.CreationTime = time.Now()
 	createdAuthToken.AccessToken = decodedResponse.AccessToken
 	createdAuthToken.ExpiresIn = decodedResponse.ExpiresIn
-	return createdAuthToken, response, nil
+	return createdAuthToken, nil
 }

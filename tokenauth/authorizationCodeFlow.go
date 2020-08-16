@@ -3,11 +3,12 @@ package tokenauth
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/requests"
 )
 
@@ -29,7 +30,7 @@ func NewRefreshableAuthToken(
 	redirectURI,
 	clientID,
 	clientSecret string,
-) (RefreshableAuthToken, requests.APIResponse, error) {
+) (RefreshableAuthToken, apierrors.TypedError) {
 	payload := fmt.Sprintf(
 		"grant_type=authorization_code&code=%s&redirect_uri=%s",
 		authCode,
@@ -44,7 +45,7 @@ func NewRefreshableAuthToken(
 		payload,
 	)
 	if err != nil {
-		return RefreshableAuthToken{}, response, err
+		return RefreshableAuthToken{}, err
 	}
 
 	var decodedResponse struct {
@@ -55,11 +56,12 @@ func NewRefreshableAuthToken(
 		RefreshToken string `json:"refresh_token"`
 	}
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return RefreshableAuthToken{}, response, err
+		return RefreshableAuthToken{}, apierrors.NewBasicErrorFromError(err)
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return RefreshableAuthToken{}, response, errors.New("token_type is not Bearer")
+		return RefreshableAuthToken{},
+			apierrors.NewBasicErrorFromString("token_type is not Bearer")
 	}
 
 	var createdRefreshableAuthToken RefreshableAuthToken
@@ -68,7 +70,7 @@ func NewRefreshableAuthToken(
 	createdRefreshableAuthToken.ExpiresIn = decodedResponse.ExpiresIn
 	createdRefreshableAuthToken.RefreshToken = decodedResponse.RefreshToken
 	createdRefreshableAuthToken.Scope = strings.Split(decodedResponse.Scope, " ")
-	return createdRefreshableAuthToken, response, nil
+	return createdRefreshableAuthToken, nil
 }
 
 // Refresh refreshes the access token using the refresh token.
@@ -77,7 +79,7 @@ func NewRefreshableAuthToken(
 func (auth *RefreshableAuthToken) Refresh(
 	clientID,
 	clientSecret string,
-) (requests.APIResponse, error) {
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	payload := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s", auth.RefreshToken)
 	encodedAuthorizationHeader := "Basic " + base64.StdEncoding.EncodeToString(
 		[]byte(fmt.Sprintf("%s:%s", clientID, clientSecret)),
@@ -98,11 +100,11 @@ func (auth *RefreshableAuthToken) Refresh(
 		ExpiresIn   int64  `json:"expires_in"`
 	}
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return response, err
+		return response, apierrors.NewBasicErrorFromError(err)
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return response, errors.New("token_type is not Bearer")
+		return response, apierrors.NewBasicErrorFromString("token_type is not Bearer")
 	}
 
 	auth.CreationTime = time.Now()

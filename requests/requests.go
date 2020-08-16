@@ -1,22 +1,17 @@
 package requests
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
 )
 
 var client = &http.Client{}
-
-// APIResponse represents a response from the Spotify REST API,
-// where JSONBody is the returned JSON.
-type APIResponse struct {
-	StatusCode int
-	JSONBody   string
-}
 
 func stringInSlice(str string, slice []string) bool {
 	for _, s := range slice {
@@ -42,21 +37,21 @@ func acceptedStatusCode(statusCode int, acceptedCodes []int) bool {
 	return false
 }
 
-func getFullRestAPIURL(subURL string) (string, error) {
+func getFullRestAPIURL(subURL string) (string, apierrors.TypedError) {
 	const baseRestAPIURL = "https://api.spotify.com/v1/"
 	parsedBaseURL, err := url.Parse(baseRestAPIURL)
 	if err != nil {
-		return "", err
+		return "", apierrors.NewBasicErrorFromError(err)
 	}
 
 	parsedSubURL, err := url.Parse(subURL)
 	if err != nil {
-		return "", err
+		return "", apierrors.NewBasicErrorFromError(err)
 	}
 
 	resolvedURL := parsedBaseURL.ResolveReference(parsedSubURL)
 	if resolvedURL == nil {
-		return "", errors.New("resolvedURL is nil in getFullURL")
+		return "", apierrors.NewBasicErrorFromString("resolvedURL is nil in getFullURL")
 	}
 
 	return resolvedURL.String(), nil
@@ -68,12 +63,14 @@ func makeBasicRequest(
 	headers map[string]string,
 	payload string,
 	acceptedStatusCodes []int,
-) (APIResponse, error) {
+	createStatusCodeError func(spotifygo.APIResponse) apierrors.TypedError,
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	if !stringInSlice(
 		httpMethod,
 		[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
 	) {
-		return APIResponse{}, errors.New("Unsupported HTTP method")
+		return spotifygo.APIResponse{},
+			apierrors.NewBasicErrorFromString("Unsupported HTTP method")
 	}
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
@@ -81,7 +78,7 @@ func makeBasicRequest(
 		request, err = http.NewRequest(httpMethod, url, strings.NewReader(payload))
 	}
 	if err != nil {
-		return APIResponse{}, err
+		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromError(err)
 	}
 
 	request.Header.Set("Accept", "application/json")
@@ -91,7 +88,7 @@ func makeBasicRequest(
 
 	response, err := client.Do(request)
 	if err != nil {
-		return APIResponse{}, err
+		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromError(err)
 	}
 	defer response.Body.Close()
 
@@ -100,17 +97,22 @@ func makeBasicRequest(
 	// to not be too big.
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return APIResponse{StatusCode: response.StatusCode}, err
+		return spotifygo.APIResponse{StatusCode: response.StatusCode},
+			apierrors.NewBasicErrorFromError(err)
 	}
 
-	apiResponse := APIResponse{StatusCode: response.StatusCode, JSONBody: string(body)}
+	apiResponse := spotifygo.APIResponse{StatusCode: response.StatusCode, JSONBody: string(body)}
 
 	if !acceptedStatusCode(apiResponse.StatusCode, acceptedStatusCodes) {
-		errorMessage := fmt.Sprintf(
-			"Got an unsupported status code in a request: %d",
-			apiResponse.StatusCode,
-		)
-		return apiResponse, errors.New(errorMessage)
+		if createStatusCodeError == nil {
+			errorMessage := fmt.Sprintf(
+				"Got an unsupported status code in a request: %d",
+				apiResponse.StatusCode,
+			)
+			return apiResponse, apierrors.NewBasicErrorFromString(errorMessage)
+		}
+
+		return apiResponse, createStatusCodeError(apiResponse)
 	}
 
 	return apiResponse, nil
@@ -122,18 +124,27 @@ func makeRestAPIRequest(
 	headers map[string]string,
 	payloadJSON string,
 	acceptedStatusCodes []int,
-) (APIResponse, error) {
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	url, err := getFullRestAPIURL(subURL)
 	if err != nil {
-		return APIResponse{}, err
+		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromError(err)
 	}
+
+	fmt.Println(url)
 
 	updatedHeaders := map[string]string{"Content-Type": "application/json"}
 	for key, value := range headers {
 		updatedHeaders[key] = value
 	}
 
-	return makeBasicRequest(httpMethod, url, updatedHeaders, payloadJSON, acceptedStatusCodes)
+	return makeBasicRequest(
+		httpMethod,
+		url,
+		updatedHeaders,
+		payloadJSON,
+		acceptedStatusCodes,
+		apierrors.NewRestAPIError,
+	)
 }
 
 // GetRestAPI performs an HTTP GET request to a given Spotify REST API URL
@@ -142,7 +153,7 @@ func GetRestAPI(
 	subURL string,
 	headers map[string]string,
 	acceptedStatusCodes []int,
-) (APIResponse, error) {
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	return makeRestAPIRequest(http.MethodGet, subURL, headers, "", acceptedStatusCodes)
 }
 
@@ -153,7 +164,7 @@ func PostRestAPI(
 	headers map[string]string,
 	payloadJSON string,
 	acceptedStatusCodes []int,
-) (APIResponse, error) {
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	return makeRestAPIRequest(http.MethodPost, subURL, headers, payloadJSON, acceptedStatusCodes)
 }
 
@@ -164,7 +175,7 @@ func PutRestAPI(
 	headers map[string]string,
 	payloadJSON string,
 	acceptedStatusCodes []int,
-) (APIResponse, error) {
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	return makeRestAPIRequest(http.MethodPut, subURL, headers, payloadJSON, acceptedStatusCodes)
 }
 
@@ -174,7 +185,7 @@ func DeleteRestAPI(
 	subURL string,
 	headers map[string]string,
 	acceptedStatusCodes []int,
-) (APIResponse, error) {
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	return makeRestAPIRequest(http.MethodDelete, subURL, headers, "", acceptedStatusCodes)
 }
 
@@ -184,7 +195,7 @@ func DeleteRestAPI(
 func PostAuthorization(
 	headers map[string]string,
 	payloadFormURLEncoded string,
-) (APIResponse, error) {
+) (spotifygo.APIResponse, apierrors.TypedError) {
 	const tokenAPIURL = "https://accounts.spotify.com/api/token"
 
 	updatedHeaders := map[string]string{"Content-Type": "application/x-www-form-urlencoded"}
@@ -198,9 +209,10 @@ func PostAuthorization(
 		updatedHeaders,
 		payloadFormURLEncoded,
 		[]int{200},
+		apierrors.NewAuthenticationError,
 	)
 	if err != nil {
-		return response, err
+		return response, apierrors.NewBasicErrorFromError(err)
 	}
 
 	return response, nil

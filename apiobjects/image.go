@@ -1,6 +1,6 @@
 package apiobjects
 
-import "errors"
+import "github.com/taiypeo/spotifygo/apierrors"
 
 // Image represents an image object
 // in the Spotify API Object model.
@@ -10,13 +10,13 @@ type Image struct {
 	Width  int64  `json:"width"`
 }
 
-// Validate returns an error if an Image struct is incorrect.
-func (image Image) Validate() error {
+// Validate returns a TypedError if an Image struct is incorrect.
+func (image Image) Validate() apierrors.TypedError {
 	if image.Height < 0 {
-		return errors.New("Height is less than 0 in Image")
+		return apierrors.NewBasicErrorFromString("Height is less than 0 in Image")
 	}
 	if image.Width < 0 {
-		return errors.New("Width is less than 0 in Image")
+		return apierrors.NewBasicErrorFromString("Width is less than 0 in Image")
 	}
 
 	return nil

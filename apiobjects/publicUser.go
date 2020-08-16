@@ -1,6 +1,6 @@
 package apiobjects
 
-import "errors"
+import "github.com/taiypeo/spotifygo/apierrors"
 
 // PublicUser represents a public user object
 // in the Spotify API Object model.
@@ -15,8 +15,8 @@ type PublicUser struct {
 	URI          string      `json:"uri"`
 }
 
-// Validate returns an error if a PublicUser struct is incorrect.
-func (user PublicUser) Validate() error {
+// Validate returns a TypedError if a PublicUser struct is incorrect.
+func (user PublicUser) Validate() apierrors.TypedError {
 	if err := user.ExternalURLs.Validate(); err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (user PublicUser) Validate() error {
 		}
 	}
 	if user.Type != "user" {
-		return errors.New("Type is not 'user' in User")
+		return apierrors.NewBasicErrorFromString("Type is not 'user' in User")
 	}
 
 	return nil

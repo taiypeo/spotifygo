@@ -2,11 +2,11 @@ package tokenauth
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/requests"
 )
 
@@ -30,7 +30,7 @@ func NewPKCERefreshableAuthToken(
 	redirectURI,
 	clientID,
 	codeVerifier string,
-) (PKCERefreshableAuthToken, requests.APIResponse, error) {
+) (PKCERefreshableAuthToken, apierrors.TypedError) {
 	payload := fmt.Sprintf(
 		"client_id=%s&grant_type=authorization_code&code=%s&redirect_uri=%s&code_verifier=%s",
 		clientID,
@@ -41,7 +41,7 @@ func NewPKCERefreshableAuthToken(
 
 	response, err := requests.PostAuthorization(map[string]string{}, payload)
 	if err != nil {
-		return PKCERefreshableAuthToken{}, response, err
+		return PKCERefreshableAuthToken{}, err
 	}
 
 	var decodedResponse struct {
@@ -52,11 +52,12 @@ func NewPKCERefreshableAuthToken(
 		RefreshToken string `json:"refresh_token"`
 	}
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return PKCERefreshableAuthToken{}, response, err
+		return PKCERefreshableAuthToken{}, apierrors.NewBasicErrorFromError(err)
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return PKCERefreshableAuthToken{}, response, errors.New("token_type is not Bearer")
+		return PKCERefreshableAuthToken{},
+			apierrors.NewBasicErrorFromString("token_type is not Bearer")
 	}
 
 	var createdPKCERefreshableAuthToken PKCERefreshableAuthToken
@@ -65,12 +66,12 @@ func NewPKCERefreshableAuthToken(
 	createdPKCERefreshableAuthToken.ExpiresIn = decodedResponse.ExpiresIn
 	createdPKCERefreshableAuthToken.RefreshToken = decodedResponse.RefreshToken
 	createdPKCERefreshableAuthToken.Scope = strings.Split(decodedResponse.Scope, " ")
-	return createdPKCERefreshableAuthToken, response, nil
+	return createdPKCERefreshableAuthToken, nil
 }
 
 // Refresh refreshes the access token using the refresh token.
 // clientId is the Spotify application client id.
-func (auth *PKCERefreshableAuthToken) Refresh(clientID string) (requests.APIResponse, error) {
+func (auth *PKCERefreshableAuthToken) Refresh(clientID string) apierrors.TypedError {
 	payload := fmt.Sprintf(
 		"grant_type=refresh_token&refresh_token=%s&client_id=%s",
 		auth.RefreshToken,
@@ -79,7 +80,7 @@ func (auth *PKCERefreshableAuthToken) Refresh(clientID string) (requests.APIResp
 
 	response, err := requests.PostAuthorization(map[string]string{}, payload)
 	if err != nil {
-		return response, err
+		return err
 	}
 
 	var decodedResponse struct {
@@ -90,11 +91,11 @@ func (auth *PKCERefreshableAuthToken) Refresh(clientID string) (requests.APIResp
 		RefreshToken string `json:"refresh_token"`
 	}
 	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
-		return response, err
+		return apierrors.NewBasicErrorFromError(err)
 	}
 
 	if decodedResponse.TokenType != "Bearer" {
-		return response, errors.New("token_type is not Bearer")
+		return apierrors.NewBasicErrorFromString("token_type is not Bearer")
 	}
 
 	auth.CreationTime = time.Now()
@@ -103,5 +104,5 @@ func (auth *PKCERefreshableAuthToken) Refresh(clientID string) (requests.APIResp
 	auth.Scope = strings.Split(decodedResponse.Scope, " ")
 	auth.RefreshToken = decodedResponse.RefreshToken
 
-	return response, nil
+	return nil
 }

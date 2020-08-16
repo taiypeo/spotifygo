@@ -1,5 +1,7 @@
 package apiobjects
 
+import "github.com/taiypeo/spotifygo/apierrors"
+
 // PrivateUser represents a private user object
 // in the Spotify API Object model.
 type PrivateUser struct {
@@ -9,7 +11,7 @@ type PrivateUser struct {
 	PublicUser
 }
 
-// Validate returns an error if a PrivateUser struct is incorrect.
-func (user PrivateUser) Validate() error {
+// Validate returns a TypedError if a PrivateUser struct is incorrect.
+func (user PrivateUser) Validate() apierrors.TypedError {
 	return user.PublicUser.Validate()
 }
