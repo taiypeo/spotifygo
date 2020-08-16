@@ -22,5 +22,8 @@ func (artist FullArtist) Validate() apierrors.TypedError {
 			return err
 		}
 	}
+	if artist.Popularity < 0 || artist.Popularity > 100 {
+		return apierrors.NewBasicErrorFromString("Popularity is out of bounds in FullArtist")
+	}
 	return artist.SimplifiedArtist.Validate()
 }

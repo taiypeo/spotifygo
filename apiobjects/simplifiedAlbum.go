@@ -49,7 +49,7 @@ func (album SimplifiedAlbum) Validate() apierrors.TypedError {
 
 	if !stringInSliceCaseIndependent(
 		album.AlbumType,
-		[]string{"album", "single", "compilation"},
+		[]string{"", "album", "single", "compilation"},
 	) {
 		return apierrors.NewBasicErrorFromString(
 			"Unknown AlbumType " + album.AlbumType + " in SimplifiedAlbum",

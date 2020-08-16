@@ -31,17 +31,33 @@ func (track SimplifiedTrack) Validate() apierrors.TypedError {
 			return err
 		}
 	}
+
+	if track.DiscNumber < 0 {
+		return apierrors.NewBasicErrorFromString("DiscNumber is less than 0 in SimplifiedTrack")
+	}
+
+	if track.DurationMS < 0 {
+		return apierrors.NewBasicErrorFromString("DurationMS is less than 0 in SimplifiedTrack")
+	}
+
 	if err := track.ExternalURLs.Validate(); err != nil {
 		return err
 	}
+
 	if err := track.LinkedFrom.Validate(); err != nil {
 		return err
 	}
+
 	if err := track.Restrictions.Validate(); err != nil {
 		return err
 	}
+
+	if track.TrackNumber < 0 {
+		return apierrors.NewBasicErrorFromString("TrackNumber is less than 0 in SimplifiedTrack")
+	}
+
 	if track.Type != "" && track.Type != "track" {
-		return apierrors.NewBasicErrorFromString("Type is not 'track' in TrackLink")
+		return apierrors.NewBasicErrorFromString("Type is not 'track' in SimplifiedTrack")
 	}
 
 	return track.ExternalURLs.Validate()
