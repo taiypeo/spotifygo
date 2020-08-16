@@ -28,7 +28,7 @@ func (user PublicUser) Validate() apierrors.TypedError {
 			return err
 		}
 	}
-	if user.Type != "user" {
+	if user.Type != "" && user.Type != "user" {
 		return apierrors.NewBasicErrorFromString("Type is not 'user' in User")
 	}
 
