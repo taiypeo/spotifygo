@@ -3,6 +3,7 @@ package apiobjects
 import (
 	"strings"
 
+	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 )
 
@@ -38,6 +39,10 @@ type SimplifiedAlbum struct {
 
 // Validate returns a TypedError if a SimplifiedTrack struct is incorrect.
 func (album SimplifiedAlbum) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	if !stringInSliceCaseIndependent(
 		album.AlbumGroup,
 		[]string{"", "album", "single", "compilation", "appears_on"},

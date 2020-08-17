@@ -1,6 +1,9 @@
 package apiobjects
 
-import "github.com/taiypeo/spotifygo/apierrors"
+import (
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+)
 
 // Followers represents an followers object
 // in the Spotify API Object model.
@@ -11,6 +14,10 @@ type Followers struct {
 
 // Validate returns a TypedError if an Followers struct is incorrect.
 func (followers Followers) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	if followers.Href != "" {
 		return apierrors.NewBasicErrorFromString("Href is not empty in Followers")
 	}

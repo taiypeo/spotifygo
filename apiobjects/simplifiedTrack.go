@@ -1,6 +1,9 @@
 package apiobjects
 
-import "github.com/taiypeo/spotifygo/apierrors"
+import (
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+)
 
 // SimplifiedTrack represents a simplified track object
 // in the Spotify API Object model.
@@ -26,6 +29,10 @@ type SimplifiedTrack struct {
 
 // Validate returns a TypedError if a SimplifiedTrack struct is incorrect.
 func (track SimplifiedTrack) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	for _, artist := range track.Artists {
 		if err := artist.Validate(); err != nil {
 			return err

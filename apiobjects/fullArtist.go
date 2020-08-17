@@ -1,6 +1,9 @@
 package apiobjects
 
-import "github.com/taiypeo/spotifygo/apierrors"
+import (
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+)
 
 // FullArtist represents a full artist object
 // in the Spotify API Object model.
@@ -14,6 +17,10 @@ type FullArtist struct {
 
 // Validate returns a TypedError if a FullArtist struct is incorrect.
 func (artist FullArtist) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	if err := artist.Followers.Validate(); err != nil {
 		return err
 	}

@@ -1,6 +1,9 @@
 package apiobjects
 
-import "github.com/taiypeo/spotifygo/apierrors"
+import (
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+)
 
 // PublicUser represents a public user object
 // in the Spotify API Object model.
@@ -17,6 +20,10 @@ type PublicUser struct {
 
 // Validate returns a TypedError if a PublicUser struct is incorrect.
 func (user PublicUser) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	if err := user.ExternalURLs.Validate(); err != nil {
 		return err
 	}

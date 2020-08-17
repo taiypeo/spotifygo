@@ -1,6 +1,7 @@
 package apiobjects
 
 import (
+	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 )
 
@@ -16,6 +17,10 @@ type TrackLink struct {
 
 // Validate returns a TypedError if a TrackLink struct is incorrect.
 func (track TrackLink) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	if track.Type != "" && track.Type != "track" {
 		return apierrors.NewBasicErrorFromString("Type is not 'track' in TrackLink")
 	}

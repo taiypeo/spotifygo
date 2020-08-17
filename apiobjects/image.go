@@ -1,6 +1,9 @@
 package apiobjects
 
-import "github.com/taiypeo/spotifygo/apierrors"
+import (
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+)
 
 // Image represents an image object
 // in the Spotify API Object model.
@@ -12,6 +15,10 @@ type Image struct {
 
 // Validate returns a TypedError if an Image struct is incorrect.
 func (image Image) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	if image.Height < 0 {
 		return apierrors.NewBasicErrorFromString("Height is less than 0 in Image")
 	}

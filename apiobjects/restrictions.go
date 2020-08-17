@@ -1,6 +1,9 @@
 package apiobjects
 
-import "github.com/taiypeo/spotifygo/apierrors"
+import (
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+)
 
 // Restrictions represents a restrictions object
 // in the Spotify API Object model.
@@ -12,6 +15,10 @@ type Restrictions struct {
 
 // Validate returns a TypedError if a Restrictions struct is incorrect.
 func (restrictions Restrictions) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	if restrictions.Reason != "" && restrictions.Reason != "market" {
 		return apierrors.NewBasicErrorFromString("Invalid Reason in Restrictions")
 	}

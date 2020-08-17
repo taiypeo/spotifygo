@@ -1,6 +1,9 @@
 package apiobjects
 
-import "github.com/taiypeo/spotifygo/apierrors"
+import (
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+)
 
 // BasicPaging represents a paging object
 // in the Spotify API Object model without the
@@ -28,6 +31,10 @@ type FullArtistPaging struct {
 
 // Validate returns a TypedError if a FullArtistPaging struct is incorrect.
 func (paging FullArtistPaging) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	for _, artist := range paging.Items {
 		if err := artist.Validate(); err != nil {
 			return err
