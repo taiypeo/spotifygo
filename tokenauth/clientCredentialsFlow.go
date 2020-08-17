@@ -27,7 +27,7 @@ func (auth *AuthToken) Validate() apierrors.TypedError {
 	}
 
 	if auth.TokenType != "Bearer" {
-		return apierrors.NewBasicErrorFromString("token_type is not Bearer in AuthToken")
+		return apierrors.NewBasicErrorFromString("TokenType is not Bearer in AuthToken")
 	}
 
 	return nil
