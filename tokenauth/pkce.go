@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/requests"
 )
@@ -16,8 +17,17 @@ import (
 // While identical to RefreshableAuthToken, a new struct is necessary
 // because the refreshing behavior is different.
 type PKCERefreshableAuthToken struct {
-	RefreshToken string
+	RefreshToken string `json:"refresh_token"`
 	ScopedAuthToken
+}
+
+// Validate returns a TypedError if an PKCERefreshableAuthToken struct is incorrect.
+func (auth *PKCERefreshableAuthToken) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
+	return auth.ScopedAuthToken.Validate()
 }
 
 // NewPKCERefreshableAuthToken creates a new PKCERefreshableAuthToken.
@@ -44,28 +54,22 @@ func NewPKCERefreshableAuthToken(
 		return PKCERefreshableAuthToken{}, err
 	}
 
-	var decodedResponse struct {
-		AccessToken  string `json:"access_token"`
-		TokenType    string `json:"token_type"`
-		Scope        string `json:"scope"`
-		ExpiresIn    int64  `json:"expires_in"`
-		RefreshToken string `json:"refresh_token"`
-	}
-	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
+	var createdPKCERefreshableAuthToken PKCERefreshableAuthToken
+	if err := json.Unmarshal(
+		[]byte(response.JSONBody),
+		&createdPKCERefreshableAuthToken,
+	); err != nil {
 		return PKCERefreshableAuthToken{}, apierrors.NewBasicErrorFromError(err)
 	}
-
-	if decodedResponse.TokenType != "Bearer" {
-		return PKCERefreshableAuthToken{},
-			apierrors.NewBasicErrorFromString("token_type is not Bearer")
+	if err := (&createdPKCERefreshableAuthToken).Validate(); err != nil {
+		return PKCERefreshableAuthToken{}, err
 	}
 
-	var createdPKCERefreshableAuthToken PKCERefreshableAuthToken
 	createdPKCERefreshableAuthToken.CreationTime = time.Now()
-	createdPKCERefreshableAuthToken.AccessToken = decodedResponse.AccessToken
-	createdPKCERefreshableAuthToken.ExpiresIn = decodedResponse.ExpiresIn
-	createdPKCERefreshableAuthToken.RefreshToken = decodedResponse.RefreshToken
-	createdPKCERefreshableAuthToken.Scope = strings.Split(decodedResponse.Scope, " ")
+	createdPKCERefreshableAuthToken.Scope = strings.Split(
+		createdPKCERefreshableAuthToken.ScopeString,
+		" ",
+	)
 	return createdPKCERefreshableAuthToken, nil
 }
 
@@ -83,26 +87,20 @@ func (auth *PKCERefreshableAuthToken) Refresh(clientID string) apierrors.TypedEr
 		return err
 	}
 
-	var decodedResponse struct {
-		AccessToken  string `json:"access_token"`
-		TokenType    string `json:"token_type"`
-		Scope        string `json:"scope"`
-		ExpiresIn    int64  `json:"expires_in"`
-		RefreshToken string `json:"refresh_token"`
-	}
-	if err := json.Unmarshal([]byte(response.JSONBody), &decodedResponse); err != nil {
+	var refreshedToken PKCERefreshableAuthToken
+	if err := json.Unmarshal([]byte(response.JSONBody), &refreshedToken); err != nil {
 		return apierrors.NewBasicErrorFromError(err)
 	}
-
-	if decodedResponse.TokenType != "Bearer" {
-		return apierrors.NewBasicErrorFromString("token_type is not Bearer")
+	if err := (&refreshedToken).Validate(); err != nil {
+		return err
 	}
 
 	auth.CreationTime = time.Now()
-	auth.AccessToken = decodedResponse.AccessToken
-	auth.ExpiresIn = decodedResponse.ExpiresIn
-	auth.Scope = strings.Split(decodedResponse.Scope, " ")
-	auth.RefreshToken = decodedResponse.RefreshToken
+	auth.AccessToken = refreshedToken.AccessToken
+	auth.ExpiresIn = refreshedToken.ExpiresIn
+	auth.ScopeString = refreshedToken.ScopeString
+	auth.Scope = strings.Split(auth.ScopeString, " ")
+	auth.RefreshToken = refreshedToken.RefreshToken
 
 	return nil
 }
