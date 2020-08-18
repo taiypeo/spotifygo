@@ -61,3 +61,21 @@ func (paging FullTrackPaging) Validate() apierrors.TypedError {
 
 	return paging.BasicPaging.Validate()
 }
+
+// SimplifiedTrackPaging represents a simplified track paging object
+// in the Spotify API Object model.
+type SimplifiedTrackPaging struct {
+	Items []SimplifiedTrack `json:"items"`
+	BasicPaging
+}
+
+// Validate returns a TypedError if a SimplifiedTrackPaging struct is incorrect.
+func (paging SimplifiedTrackPaging) Validate() apierrors.TypedError {
+	for _, track := range paging.Items {
+		if err := track.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return paging.BasicPaging.Validate()
+}
