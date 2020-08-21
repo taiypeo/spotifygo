@@ -53,6 +53,10 @@ type FullTrackPaging struct {
 
 // Validate returns a TypedError if a FullTrackPaging struct is incorrect.
 func (paging FullTrackPaging) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	for _, track := range paging.Items {
 		if err := track.Validate(); err != nil {
 			return err
@@ -71,6 +75,10 @@ type SimplifiedTrackPaging struct {
 
 // Validate returns a TypedError if a SimplifiedTrackPaging struct is incorrect.
 func (paging SimplifiedTrackPaging) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
 	for _, track := range paging.Items {
 		if err := track.Validate(); err != nil {
 			return err
