@@ -1,0 +1,60 @@
+package album
+
+import (
+	"encoding/json"
+	"strings"
+
+	"github.com/taiypeo/spotifygo"
+	"github.com/taiypeo/spotifygo/apierrors"
+	"github.com/taiypeo/spotifygo/apiobjects"
+	"github.com/taiypeo/spotifygo/requests"
+	"github.com/taiypeo/spotifygo/tokenauth"
+)
+
+// GetAlbums performs a GET request to /albums?ids={ids}&market={market} to receive
+// several full album objects (ids in the URL are comma-separated).
+// 'market' (same as 'country') has a default value of ''.
+func GetAlbums(
+	token tokenauth.Token,
+	IDs []string,
+	market string,
+) ([]apiobjects.FullAlbum, apierrors.TypedError) {
+	if len(IDs) > 20 {
+		return nil, apierrors.NewBasicErrorFromString("IDs cannot be longer than 20")
+	}
+
+	params := map[string]string{
+		"ids":    strings.Join(IDs, ","),
+		"market": market,
+	}
+
+	url, err := spotifygo.GetURLWithQueryParameters("albums", params)
+	if err != nil {
+		return nil, apierrors.NewBasicErrorFromError(err)
+	}
+
+	response, typedErr := requests.GetRestAPI(
+		url,
+		map[string]string{"Authorization": token.GetToken()},
+		[]int{200},
+	)
+	if typedErr != nil {
+		return nil, typedErr
+	}
+
+	var responseAlbums struct {
+		Albums []apiobjects.FullAlbum `json:"albums"`
+	}
+
+	if err := json.Unmarshal([]byte(response.JSONBody), &responseAlbums); err != nil {
+		return nil, apierrors.NewBasicErrorFromError(err)
+	}
+
+	for _, album := range responseAlbums.Albums {
+		if err := album.Validate(); err != nil {
+			return nil, err
+		}
+	}
+
+	return responseAlbums.Albums, nil
+}
