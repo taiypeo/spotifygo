@@ -28,9 +28,9 @@ func GetAlbums(
 		"market": market,
 	}
 
-	url, err := spotifygo.GetURLWithQueryParameters("albums", params)
-	if err != nil {
-		return nil, apierrors.NewBasicErrorFromError(err)
+	url, basicErr := spotifygo.GetURLWithQueryParameters("albums", params)
+	if basicErr != nil {
+		return nil, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
 	response, typedErr := requests.GetRestAPI(
@@ -46,13 +46,13 @@ func GetAlbums(
 		Albums []apiobjects.FullAlbum `json:"albums"`
 	}
 
-	if err := json.Unmarshal([]byte(response.JSONBody), &responseAlbums); err != nil {
-		return nil, apierrors.NewBasicErrorFromError(err)
+	if basicErr := json.Unmarshal([]byte(response.JSONBody), &responseAlbums); basicErr != nil {
+		return nil, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
 	for _, album := range responseAlbums.Albums {
-		if err := album.Validate(); err != nil {
-			return nil, err
+		if typedErr := album.Validate(); typedErr != nil {
+			return nil, typedErr
 		}
 	}
 

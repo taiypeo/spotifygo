@@ -3,6 +3,7 @@ package album
 import (
 	"encoding/json"
 
+	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/apiobjects"
 	"github.com/taiypeo/spotifygo/requests"
@@ -17,27 +18,29 @@ func GetAlbum(
 	albumID,
 	market string,
 ) (apiobjects.FullAlbum, apierrors.TypedError) {
-	query := ""
-	if market != "" {
-		query = "?market=" + market
+	url, basicErr := spotifygo.GetURLWithQueryParameters("albums/"+albumID, map[string]string{
+		"market": market,
+	})
+	if basicErr != nil {
+		return apiobjects.FullAlbum{}, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
-	response, err := requests.GetRestAPI(
-		"albums/"+albumID+query,
+	response, typedErr := requests.GetRestAPI(
+		url,
 		map[string]string{"Authorization": token.GetToken()},
 		[]int{200},
 	)
-	if err != nil {
-		return apiobjects.FullAlbum{}, err
+	if typedErr != nil {
+		return apiobjects.FullAlbum{}, typedErr
 	}
 
 	var album apiobjects.FullAlbum
-	if err := json.Unmarshal([]byte(response.JSONBody), &album); err != nil {
-		return apiobjects.FullAlbum{}, apierrors.NewBasicErrorFromError(err)
+	if basicErr := json.Unmarshal([]byte(response.JSONBody), &album); basicErr != nil {
+		return apiobjects.FullAlbum{}, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
-	if err := album.Validate(); err != nil {
-		return album, err
+	if typedErr := album.Validate(); typedErr != nil {
+		return album, typedErr
 	}
 
 	return album, nil
