@@ -9,6 +9,7 @@ import (
 	"github.com/taiypeo/spotifygo/apiobjects"
 	"github.com/taiypeo/spotifygo/requests"
 	"github.com/taiypeo/spotifygo/tokenauth"
+	"github.com/taiypeo/spotifygo/urltools"
 )
 
 // TimeRange represents the time range for GetUserTopArtistsAndTracks.
@@ -60,7 +61,7 @@ func sendRequest(
 		return spotifygo.APIResponse{}, typedErr
 	}
 
-	url, basicErr := spotifygo.GetURLWithQueryParameters(
+	url, basicErr := urltools.GetURLWithQueryParameters(
 		"me/top/"+personalizationType,
 		map[string]string{
 			"limit":      strconv.FormatInt(limit, 10),

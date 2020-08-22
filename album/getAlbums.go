@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
 	"github.com/taiypeo/spotifygo/apiobjects"
 	"github.com/taiypeo/spotifygo/requests"
 	"github.com/taiypeo/spotifygo/tokenauth"
+	"github.com/taiypeo/spotifygo/urltools"
 )
 
 // GetAlbums performs a GET request to /albums?ids={ids}&market={market} to receive
@@ -28,7 +28,7 @@ func GetAlbums(
 		"market": market,
 	}
 
-	url, basicErr := spotifygo.GetURLWithQueryParameters("albums", params)
+	url, basicErr := urltools.GetURLWithQueryParameters("albums", params)
 	if basicErr != nil {
 		return nil, apierrors.NewBasicErrorFromError(basicErr)
 	}

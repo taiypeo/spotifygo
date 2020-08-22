@@ -1,4 +1,4 @@
-package spotifygo
+package urltools
 
 import "net/url"
 
