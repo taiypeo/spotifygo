@@ -14,22 +14,22 @@ import (
 func GetCurrentUserProfile(
 	token tokenauth.Token,
 ) (apiobjects.PrivateUser, apierrors.TypedError) {
-	response, err := requests.GetRestAPI(
+	response, typedErr := requests.GetRestAPI(
 		"me/",
 		map[string]string{"Authorization": token.GetToken()},
 		[]int{200},
 	)
-	if err != nil {
-		return apiobjects.PrivateUser{}, err
+	if typedErr != nil {
+		return apiobjects.PrivateUser{}, typedErr
 	}
 
 	var user apiobjects.PrivateUser
-	if err := json.Unmarshal([]byte(response.JSONBody), &user); err != nil {
-		return apiobjects.PrivateUser{}, apierrors.NewBasicErrorFromError(err)
+	if basicErr := json.Unmarshal([]byte(response.JSONBody), &user); basicErr != nil {
+		return apiobjects.PrivateUser{}, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
-	if err := user.Validate(); err != nil {
-		return user, err
+	if typedErr := user.Validate(); typedErr != nil {
+		return user, typedErr
 	}
 
 	return user, nil

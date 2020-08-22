@@ -15,22 +15,22 @@ func GetUserProfile(
 	token tokenauth.Token,
 	userID string,
 ) (apiobjects.PublicUser, apierrors.TypedError) {
-	response, err := requests.GetRestAPI(
+	response, typedErr := requests.GetRestAPI(
 		"users/"+userID,
 		map[string]string{"Authorization": token.GetToken()},
 		[]int{200},
 	)
-	if err != nil {
-		return apiobjects.PublicUser{}, err
+	if typedErr != nil {
+		return apiobjects.PublicUser{}, typedErr
 	}
 
 	var user apiobjects.PublicUser
-	if err := json.Unmarshal([]byte(response.JSONBody), &user); err != nil {
-		return apiobjects.PublicUser{}, apierrors.NewBasicErrorFromError(err)
+	if basicErr := json.Unmarshal([]byte(response.JSONBody), &user); basicErr != nil {
+		return apiobjects.PublicUser{}, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
-	if err := user.Validate(); err != nil {
-		return user, err
+	if typedErr := user.Validate(); typedErr != nil {
+		return user, typedErr
 	}
 
 	return user, nil
