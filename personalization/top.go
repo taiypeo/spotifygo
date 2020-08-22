@@ -2,7 +2,7 @@ package personalization
 
 import (
 	"encoding/json"
-	"fmt"
+	"strconv"
 
 	"github.com/taiypeo/spotifygo"
 	"github.com/taiypeo/spotifygo/apierrors"
@@ -55,25 +55,30 @@ func sendRequest(
 			apierrors.NewBasicErrorFromString("Offset cannot be negative")
 	}
 
-	timeRangeString, err := timeRange.String()
-	if err != nil {
-		return spotifygo.APIResponse{}, err
+	timeRangeString, typedErr := timeRange.String()
+	if typedErr != nil {
+		return spotifygo.APIResponse{}, typedErr
 	}
 
-	url := fmt.Sprintf(
-		"me/top/%s?limit=%d&offset=%d&time_range=%s",
-		personalizationType,
-		limit,
-		offset,
-		timeRangeString,
+	url, basicErr := spotifygo.GetURLWithQueryParameters(
+		"me/top/"+personalizationType,
+		map[string]string{
+			"limit":      strconv.FormatInt(limit, 10),
+			"offset":     strconv.FormatInt(offset, 10),
+			"time_range": timeRangeString,
+		},
 	)
-	response, err := requests.GetRestAPI(
+	if basicErr != nil {
+		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromError(basicErr)
+	}
+
+	response, typedErr := requests.GetRestAPI(
 		url,
 		map[string]string{"Authorization": token.GetToken()},
 		[]int{200},
 	)
-	if err != nil {
-		return spotifygo.APIResponse{}, err
+	if typedErr != nil {
+		return spotifygo.APIResponse{}, typedErr
 	}
 
 	return response, nil
@@ -88,18 +93,18 @@ func GetUserTopArtists(
 	offset int64,
 	timeRange TimeRange,
 ) (apiobjects.FullArtistPaging, apierrors.TypedError) {
-	response, err := sendRequest(token, limit, offset, timeRange, "artists")
-	if err != nil {
-		return apiobjects.FullArtistPaging{}, err
+	response, typedErr := sendRequest(token, limit, offset, timeRange, "artists")
+	if typedErr != nil {
+		return apiobjects.FullArtistPaging{}, typedErr
 	}
 
 	var paging apiobjects.FullArtistPaging
-	if err := json.Unmarshal([]byte(response.JSONBody), &paging); err != nil {
-		return apiobjects.FullArtistPaging{}, apierrors.NewBasicErrorFromError(err)
+	if basicErr := json.Unmarshal([]byte(response.JSONBody), &paging); basicErr != nil {
+		return apiobjects.FullArtistPaging{}, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
-	if err := paging.Validate(); err != nil {
-		return paging, err
+	if typedErr := paging.Validate(); typedErr != nil {
+		return paging, typedErr
 	}
 
 	return paging, nil
@@ -114,18 +119,18 @@ func GetUserTopTracks(
 	offset int64,
 	timeRange TimeRange,
 ) (apiobjects.FullTrackPaging, apierrors.TypedError) {
-	response, err := sendRequest(token, limit, offset, timeRange, "tracks")
-	if err != nil {
-		return apiobjects.FullTrackPaging{}, err
+	response, typedErr := sendRequest(token, limit, offset, timeRange, "tracks")
+	if typedErr != nil {
+		return apiobjects.FullTrackPaging{}, typedErr
 	}
 
 	var paging apiobjects.FullTrackPaging
-	if err := json.Unmarshal([]byte(response.JSONBody), &paging); err != nil {
-		return apiobjects.FullTrackPaging{}, apierrors.NewBasicErrorFromError(err)
+	if basicErr := json.Unmarshal([]byte(response.JSONBody), &paging); basicErr != nil {
+		return apiobjects.FullTrackPaging{}, apierrors.NewBasicErrorFromError(basicErr)
 	}
 
-	if err := paging.Validate(); err != nil {
-		return paging, err
+	if typedErr := paging.Validate(); typedErr != nil {
+		return paging, typedErr
 	}
 
 	return paging, nil
