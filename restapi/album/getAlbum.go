@@ -18,11 +18,12 @@ func GetAlbum(
 	albumID,
 	market string,
 ) (apiobjects.FullAlbum, apierrors.TypedError) {
-	url, basicErr := urltools.GetURLWithQueryParameters("albums/"+albumID, map[string]string{
-		"market": market,
-	})
-	if basicErr != nil {
-		return apiobjects.FullAlbum{}, apierrors.NewBasicErrorFromError(basicErr)
+	url, typedErr := urltools.GetURLWithQueryParameters(
+		"albums/"+albumID,
+		map[string]string{"market": market},
+	)
+	if typedErr != nil {
+		return apiobjects.FullAlbum{}, typedErr
 	}
 
 	response, typedErr := requests.GetRestAPI(

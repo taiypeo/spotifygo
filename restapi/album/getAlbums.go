@@ -28,9 +28,9 @@ func GetAlbums(
 		"market": market,
 	}
 
-	url, basicErr := urltools.GetURLWithQueryParameters("albums", params)
-	if basicErr != nil {
-		return nil, apierrors.NewBasicErrorFromError(basicErr)
+	url, typedErr := urltools.GetURLWithQueryParameters("albums", params)
+	if typedErr != nil {
+		return nil, typedErr
 	}
 
 	response, typedErr := requests.GetRestAPI(

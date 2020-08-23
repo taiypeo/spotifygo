@@ -34,7 +34,7 @@ func GetAlbumTracks(
 			apierrors.NewBasicErrorFromString("Offset cannot be negative")
 	}
 
-	url, basicErr := urltools.GetURLWithQueryParameters(
+	url, typedErr := urltools.GetURLWithQueryParameters(
 		"albums/"+albumID+"/tracks",
 		map[string]string{
 			"limit":  strconv.FormatInt(limit, 10),
@@ -42,8 +42,8 @@ func GetAlbumTracks(
 			"market": market,
 		},
 	)
-	if basicErr != nil {
-		return apiobjects.SimplifiedTrackPaging{}, apierrors.NewBasicErrorFromError(basicErr)
+	if typedErr != nil {
+		return apiobjects.SimplifiedTrackPaging{}, typedErr
 	}
 
 	response, typedErr := requests.GetRestAPI(

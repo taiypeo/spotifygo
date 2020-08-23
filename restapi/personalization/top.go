@@ -61,7 +61,7 @@ func sendRequest(
 		return spotifygo.APIResponse{}, typedErr
 	}
 
-	url, basicErr := urltools.GetURLWithQueryParameters(
+	url, typedErr := urltools.GetURLWithQueryParameters(
 		"me/top/"+personalizationType,
 		map[string]string{
 			"limit":      strconv.FormatInt(limit, 10),
@@ -69,8 +69,8 @@ func sendRequest(
 			"time_range": timeRangeString,
 		},
 	)
-	if basicErr != nil {
-		return spotifygo.APIResponse{}, apierrors.NewBasicErrorFromError(basicErr)
+	if typedErr != nil {
+		return spotifygo.APIResponse{}, typedErr
 	}
 
 	response, typedErr := requests.GetRestAPI(

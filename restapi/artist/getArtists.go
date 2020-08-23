@@ -25,9 +25,9 @@ func GetArtists(
 		"ids": strings.Join(artistIDs, ","),
 	}
 
-	url, basicErr := urltools.GetURLWithQueryParameters("artists", params)
-	if basicErr != nil {
-		return nil, apierrors.NewBasicErrorFromError(basicErr)
+	url, typedErr := urltools.GetURLWithQueryParameters("artists", params)
+	if typedErr != nil {
+		return nil, typedErr
 	}
 
 	response, typedErr := requests.GetRestAPI(
