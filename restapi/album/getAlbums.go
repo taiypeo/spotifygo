@@ -11,20 +11,20 @@ import (
 	"github.com/taiypeo/spotifygo/urltools"
 )
 
-// GetAlbums performs a GET request to /albums?ids={ids}&market={market} to receive
+// GetAlbums performs a GET request to /albums?ids={album_ids}&market={market} to receive
 // several full album objects (ids in the URL are comma-separated).
 // 'market' (same as 'country') has a default value of ''.
 func GetAlbums(
 	token tokenauth.Token,
-	IDs []string,
+	albumIDs []string,
 	market string,
 ) ([]apiobjects.FullAlbum, apierrors.TypedError) {
-	if len(IDs) > 20 {
-		return nil, apierrors.NewBasicErrorFromString("IDs cannot be longer than 20")
+	if len(albumIDs) > 20 {
+		return nil, apierrors.NewBasicErrorFromString("albumIDs cannot be longer than 20")
 	}
 
 	params := map[string]string{
-		"ids":    strings.Join(IDs, ","),
+		"ids":    strings.Join(albumIDs, ","),
 		"market": market,
 	}
 
@@ -52,7 +52,7 @@ func GetAlbums(
 
 	for _, album := range responseAlbums.Albums {
 		if typedErr := album.Validate(); typedErr != nil {
-			return nil, typedErr
+			return responseAlbums.Albums, typedErr
 		}
 	}
 
