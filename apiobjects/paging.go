@@ -35,8 +35,8 @@ func (paging FullArtistPaging) Validate() apierrors.TypedError {
 		return nil
 	}
 
-	for _, artist := range paging.Items {
-		if err := artist.Validate(); err != nil {
+	for _, item := range paging.Items {
+		if err := item.Validate(); err != nil {
 			return err
 		}
 	}
@@ -57,8 +57,8 @@ func (paging FullTrackPaging) Validate() apierrors.TypedError {
 		return nil
 	}
 
-	for _, track := range paging.Items {
-		if err := track.Validate(); err != nil {
+	for _, item := range paging.Items {
+		if err := item.Validate(); err != nil {
 			return err
 		}
 	}
@@ -79,8 +79,8 @@ func (paging SimplifiedTrackPaging) Validate() apierrors.TypedError {
 		return nil
 	}
 
-	for _, track := range paging.Items {
-		if err := track.Validate(); err != nil {
+	for _, item := range paging.Items {
+		if err := item.Validate(); err != nil {
 			return err
 		}
 	}
@@ -101,8 +101,8 @@ func (paging SimplifiedAlbumPaging) Validate() apierrors.TypedError {
 		return nil
 	}
 
-	for _, track := range paging.Items {
-		if err := track.Validate(); err != nil {
+	for _, item := range paging.Items {
+		if err := item.Validate(); err != nil {
 			return err
 		}
 	}
@@ -123,8 +123,8 @@ func (paging SimplifiedEpisodePaging) Validate() apierrors.TypedError {
 		return nil
 	}
 
-	for _, track := range paging.Items {
-		if err := track.Validate(); err != nil {
+	for _, item := range paging.Items {
+		if err := item.Validate(); err != nil {
 			return err
 		}
 	}
