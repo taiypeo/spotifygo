@@ -8,7 +8,7 @@ import (
 // FullEpisode represents a full episode object
 // in the Spotify API Object model.
 type FullEpisode struct {
-	// Show SimplifiedShow `json:"show"`
+	Show SimplifiedShow `json:"show"`
 	SimplifiedEpisode
 }
 
@@ -16,6 +16,10 @@ type FullEpisode struct {
 func (episode FullEpisode) Validate() apierrors.TypedError {
 	if !spotifygo.Debug {
 		return nil
+	}
+
+	if err := episode.Show.Validate(); err != nil {
+		return err
 	}
 
 	return episode.SimplifiedEpisode.Validate()

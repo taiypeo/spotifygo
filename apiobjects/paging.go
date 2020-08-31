@@ -109,3 +109,25 @@ func (paging SimplifiedAlbumPaging) Validate() apierrors.TypedError {
 
 	return paging.BasicPaging.Validate()
 }
+
+// SimplifiedEpisodePaging represents a simplified episode paging object
+// in the Spotify API Object model.
+type SimplifiedEpisodePaging struct {
+	Items []SimplifiedEpisode `json:"items"`
+	BasicPaging
+}
+
+// Validate returns a TypedError if a SimplifiedEpisodePaging struct is incorrect.
+func (paging SimplifiedEpisodePaging) Validate() apierrors.TypedError {
+	if !spotifygo.Debug {
+		return nil
+	}
+
+	for _, track := range paging.Items {
+		if err := track.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return paging.BasicPaging.Validate()
+}
